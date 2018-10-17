@@ -1,0 +1,116 @@
+#!/usr/bin/env python
+
+import os
+import feedparser
+import smtplib
+import transmissionrpc
+
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+# Read settings from config file.
+with open('config', 'r') as f:
+    lines = f.readlines()
+    for line in lines:
+        if 'quality' in line:
+            line = line.strip().split(' ')
+            quality = line[1]
+        if 'feeds' in line:
+            line = line.strip().split(' ')
+            feedsFile = line[1]
+        if 'targets' in line:
+            line = line.strip().split(' ')
+            targetsFile = line[1]
+        if 'archive' in line:
+            line = line.strip().split(' ')
+            archiveFile = line[1]
+        if 'fromaddr' in line:
+            line = line.strip().split(' ')
+            fromaddr = line[1]
+        if 'toaddr' in line:
+            line = line.strip().split(' ')
+            toaddr = line[1:]
+        if 'password' in line:
+            line = line.strip().split(' ')
+            password = line[1]
+        if 'torrentdir' in line:
+            line = line.strip().split(' ')
+            torrentdir = line[1]
+
+# Starts a torrent in transmission with provided link and download directory
+def startTorrent(link, directory):
+    tc = transmissionrpc.Client('localhost', port=9091)
+    tc.add_torrent(str(link), download_dir=str(directory))
+
+# Send an e-mail function. Takes a message, subject, to address and from address
+def notifyMe(msg, subj, toaddr, fromaddr, password=password):
+    message = MIMEMultipart()
+    message['From'] = fromaddr
+    message['To'] = toaddr
+    message['Subject'] = subj
+    message.attach(MIMEText(msg, 'plain'))
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.ehlo()
+    server.starttls()
+    server.ehlo()
+    server.login(fromaddr, password)
+    text = message.as_string()
+    server.sendmail(fromaddr, toaddr, text)
+
+# Add newly torrented file to archive file
+def addArchived(title):
+    with open(archiveFile, 'a') as stored:
+        stored.write(title)
+        stored.write('\n')
+
+# Check if a prospective torrent is in the archive file
+def checkArchived(title, archive):
+    for line in archive:
+        if line == title:
+            return False
+    return True
+
+# Check if a directory exists for a given torrent, make one if not
+def checkFolder(target):
+    target = target.split(' ')
+    target = ' '.join(target[1:])
+    directory = f"{torrentdir}/{target}"
+    if not os.path.isdir(directory):
+        os.makedirs(directory)
+    return directory
+
+# Strips white space from items
+def whitespaceStrip(items):
+    for index, item in enumerate(items):
+        items[index] = item.strip()
+    return items
+
+# Parses RSS feed by post, and compares targets to the title of the post
+# then makes sure they weren't downloaded already, then downloads them if not.
+def autoTorrent(feeds, targets, archive, quality):
+    for feed in feeds:
+        currentFeed = feedparser.parse(feed)
+        for post in currentFeed.entries:
+            for target in targets:
+                if target in post.title and str(quality) in post.title:
+                    if checkArchived(post.title, archive):
+                        directory = checkFolder(target)
+                        startTorrent(post.link, directory)
+                        addArchived(post.title)
+                        subj = f"{post.title} has been downloaded"
+                        msg = f"{post.title} has been downloaded and stored in {directory}"
+                        for email in toaddr:
+                            notifyMe(msg, subj, email, fromaddr)
+
+# Grab list of items and feeds you want to find in the RSS feed
+feeds = open(feedsFile, 'r').readlines()
+targets = open(targetsFile, 'r').readlines()
+archive = open(archiveFile, 'r').readlines()
+quality = str(quality)
+
+# Strip whitespace from config
+feeds = whitespaceStrip(feeds)
+targets = whitespaceStrip(targets)
+archive = whitespaceStrip(archive)
+
+autoTorrent(feeds, targets, archive, quality)

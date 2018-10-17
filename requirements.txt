@@ -1,0 +1,4 @@
+email==6.0.0a1
+feedparser==5.2.1
+six==1.11.0
+transmissionrpc==0.11
