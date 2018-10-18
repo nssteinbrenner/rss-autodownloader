@@ -17,16 +17,16 @@ torrentdir: {/path/to/torrentdirectory}
 
 Targets file is simply the phrase you are looking for in the RSS feed, each phrase you are seeking is separated by a new line.
 
-Targets  File:
+Targets  File:  
 {show I like}  
 {another show I like}  
 {etc...}  
 
 The feeds file contains the RSS feeds you'd like to search. Each RSS feed is separated by a new line.
 
-Feeds file:
-{rss feed}
-{another rss feed}
-{etc...}
+Feeds file:  
+{rss feed}  
+{another rss feed}  
+{etc...}  
 
 Archive file is left blank, the program will automatically write to it. It solely exists so you do not download the same thing twice.
