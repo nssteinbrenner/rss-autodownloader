@@ -118,7 +118,7 @@ def autoTorrent(feeds, targets, archive, quality):
 
 
 # Grab list of items you're looking for in the RSS feed, as well as the
-# list of geeds to parse.
+# list of feeds to parse.
 feeds = open(feedsFile, 'r').readlines()
 targets = open(targetsFile, 'r').readlines()
 archive = open(archiveFile, 'r').readlines()
