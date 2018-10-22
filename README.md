@@ -1,4 +1,4 @@
-# rss-autotorrenter
+# rss-autodownloader
 Automatically torrents from RSS feed based off of your specified targets.
 
 Designed for videos, will require some modifying for other formats, namely the 'quality' field will have to be modified for certain other media that might not have a clear quality label.
