@@ -8,8 +8,10 @@ import transmissionrpc
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-# Read settings from config file.
 with open('config', 'r') as f:
+    #   Reads settings from a config file. Splits the line by ' ' character.
+    #   If one argument is expected, it will pull second item. If one or more
+    #   are expected, it will pull every item after the first into a list.
     lines = f.readlines()
     for line in lines:
         if 'quality' in line:
@@ -37,13 +39,15 @@ with open('config', 'r') as f:
             line = line.strip().split(' ')
             torrentdir = line[1]
 
-# Starts a torrent in transmission with provided link and download directory
+
 def startTorrent(link, directory):
+    #   Connects to Transmission daemon and adds/starts the torrent.
     tc = transmissionrpc.Client('localhost', port=9091)
     tc.add_torrent(str(link), download_dir=str(directory))
 
-# Send an e-mail function. Takes a message, subject, to address and from address
+
 def notifyMe(msg, subj, toaddr, fromaddr, password=password):
+    #   Sends an e-mail from the 'fromaddr' e-mail to the 'toaddr'.
     message = MIMEMultipart()
     message['From'] = fromaddr
     message['To'] = toaddr
@@ -57,21 +61,26 @@ def notifyMe(msg, subj, toaddr, fromaddr, password=password):
     text = message.as_string()
     server.sendmail(fromaddr, toaddr, text)
 
-# Add newly torrented file to archive file
+
 def addArchived(title):
+    #   Writes 'title' variable to archive file, then a new line.
     with open(archiveFile, 'a') as stored:
         stored.write(title)
         stored.write('\n')
 
-# Check if a prospective torrent is in the archive file
+
 def checkArchived(title, archive):
+    # Checks to see if the 'title' variable is in the archive file.
+    if 'Batch' in title or 'batch' in title:
+        return False
     for line in archive:
         if line == title:
             return False
     return True
 
-# Check if a directory exists for a given torrent, make one if not
+
 def checkFolder(target):
+    # Check if a directory exists for a given torrent, makes one if not.
     target = target.split(' ')
     target = ' '.join(target[1:])
     directory = f"{torrentdir}/{target}"
@@ -79,15 +88,19 @@ def checkFolder(target):
         os.makedirs(directory)
     return directory
 
-# Strips white space from items
+
 def whitespaceStrip(items):
+    # Strips white space from a list.
     for index, item in enumerate(items):
         items[index] = item.strip()
     return items
 
-# Parses RSS feed by post, and compares targets to the title of the post
-# then makes sure they weren't downloaded already, then downloads them if not.
+
 def autoTorrent(feeds, targets, archive, quality):
+    # Parses RSS feed by post, and compares 'targets' variable
+    # to the title of the post, looking for a match. If there is
+    # a match, it checks the archive file, ensuring it is not already in there.
+    # It will then download the file to Transmission.
     for feed in feeds:
         currentFeed = feedparser.parse(feed)
         for post in currentFeed.entries:
@@ -98,11 +111,14 @@ def autoTorrent(feeds, targets, archive, quality):
                         startTorrent(post.link, directory)
                         addArchived(post.title)
                         subj = f"{post.title} has been downloaded"
-                        msg = f"{post.title} has been downloaded and stored in {directory}"
+                        msg = (f"{post.title} has been downloaded and stored"
+                               f" in {directory}")
                         for email in toaddr:
                             notifyMe(msg, subj, email, fromaddr)
 
-# Grab list of items and feeds you want to find in the RSS feed
+
+# Grab list of items you're looking for in the RSS feed, as well as the
+# list of geeds to parse.
 feeds = open(feedsFile, 'r').readlines()
 targets = open(targetsFile, 'r').readlines()
 archive = open(archiveFile, 'r').readlines()
