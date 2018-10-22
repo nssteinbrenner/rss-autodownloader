@@ -1,4 +1,4 @@
-# rss-autodownloader
+# rss-autotorrenter
 Automatically torrents from RSS feed based off of your specified targets.
 
 Designed for videos, will require some modifying for other formats, namely the 'quality' field will have to be modified for certain other media that might not have a clear quality label.
@@ -6,7 +6,7 @@ Designed for videos, will require some modifying for other formats, namely the '
 Reads several parameters from a config file. Note the spaces, as they are essential for the program to properly parse the config file.
 
 Config file:
-quality: {video quality, e.g 1080 (omit the 'p' normally appended)}                                                                                                                        
+quality: {video quality, e.g 1080                                                                                                                     
 feeds: {/path/to/feedsfile} (explained below)                                                                                                           
 targets: {/path/to/targetsfile} (explained below)                                                                                                      
 archive: {/path/to/archivefile} (explained below)                                                                      
